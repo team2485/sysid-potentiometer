@@ -8,15 +8,15 @@
 
 #include "math.h"
 
+#include <string>
+
 #include <fmt/core.h>
 
 #include <frc/AnalogPotentiometer.h>
 
 #include <frc/smartdashboard/SmartDashboard.h>
 
-#include "SysIdLogger.h"
-
-#include "SysIdGeneralMechanismLogger.h"
+#include <wpi/json.h>
 
 using namespace frc;
 
@@ -26,16 +26,22 @@ frc::AnalogPotentiometer analogPot{0, 2*M_PI, -M_PI};
 
 std::vector<double> m_data;
 
-double m_motorVoltage = 3.0; 
+std::string m_testType; 
 
+double m_motorVoltage = 0.0; 
 
+double m_lastPosition = 0.0;
 
+double stepVoltage = 3.0;
+
+double rampRate = 0.2; 
+
+json_serializer
 
 Robot::Robot() : frc::TimedRobot(0.005){
   try {
-    m_json = sysid::GetConfigJson();
+    m_json = GetConfigJson();
 
-    sysid::AddMotorController(m_talonsrx, "talonSRX", false, &m_talonsrx);
   } catch (std::exception& e) {
     fmt::print("FAILED: \n", e.what());
     std::exit(-1);
@@ -43,111 +49,78 @@ Robot::Robot() : frc::TimedRobot(0.005){
 }
 
 void Robot::RobotInit() {
-  m_chooser.SetDefaultOption(kAutoNameDefault, kAutoNameDefault);
-  m_chooser.AddOption(kAutoNameCustom, kAutoNameCustom);
-  frc::SmartDashboard::PutData("Auto Modes", &m_chooser);
-
 }
 
-/**
- * This function is called every robot packet, no matter the mode. Use
- * this for items like diagnostics that you want ran during disabled,
- * autonomous, teleoperated and test.
- *
- * <p> This runs after the mode specific periodic functions, but before
- * LiveWindow and SmartDashboard integrated updating.
- */
 void Robot::RobotPeriodic() {}
-
-/**
- * This autonomous (along with the chooser code above) shows how to select
- * between different autonomous modes using the dashboard. The sendable chooser
- * code works with the Java SmartDashboard. If you prefer the LabVIEW Dashboard,
- * remove all of the chooser code and uncomment the GetString line to get the
- * auto name from the text box below the Gyro.
- *
- * You can add additional auto modes by adding additional comparisons to the
- * if-else structure below with additional strings. If using the SendableChooser
- * make sure to add them to the chooser code above as well.
- */
-
-void SysIdLogger::SendData() {
-  std::stringstream ss;
-  for (size_t i = 0; i < m_data.size(); ++i) {
-    ss << std::to_string(m_data[i]);
-    if (i < m_data.size() - 1) {
-      ss << ",";
-    }
-  }
-
-  std::string m_testType == "Dynamic" ? "fast" : "slow";
-  std::string direction = m_motorVoltage > 0 ? "forward" : "backward";
-  std::string test = fmt::format("{}-{}", type, direction);
-
 }
+
 void Robot::AutonomousInit() {
-
-  //NT_Logger.InitLogging()
-  m_autoSelected = m_chooser.GetSelected();
-  // m_autoSelected = SmartDashboard::GetString("Auto Selector",
-  //     kAutoNameDefault);
-  fmt::print("Auto selected: {}\n", m_autoSelected);
-
-  if (m_autoSelected == kAutoNameCustom) {
-    // Custom Auto goes here
-    m_data.clear();
-
-  } else {
-    // Default Auto goes here
-  }
+  m_data.clear();
   double m_starttime = frc::Timer::GetFPGATimestamp().value();
+  m_data.push_back(m_starttime);
 }
 
 void Robot::AutonomousPeriodic() {
-  if (m_autoSelected == kAutoNameCustom) {
-    // Custom Auto goes here
-    std::string direction = m_motorVoltage > 0 ? "forward" : "backward";
+  m_lastPosition = analogPot.get();
+  std::string type = m_testType == "Dynamic" ? "fast" : "slow";
+  m_motorVoltage = m_talonsrx.GetMotorOutputVoltage();
+  std::string direction = m_motorVoltage > 0 ? "forward" : "backward";
+  if (m_testType == "fast") {
     if (direction == "forward") {
-      m_motorVoltage = m_motorVoltage;
+      m_motorVoltage = stepVoltage;
     }
-    else if (direction == "backward") {
-      m_motorVoltage = -m_motorVoltage;
+    else {
+      m_motorVoltage = -stepVoltage;
     }
-  } else {
-    // Default Auto goes here
+
   }
+  else {
+    if(direction == "forward") {
+      m_motorVoltage = rampRate * (frc::Timer::GetFPGATTimestamp().value() - std::m_data::front());
+    }
+    else {
+      m_motorVoltage = - rampRate * (frc::Timer::GetFPGATTimestamp().value() - std::m_data::front());
+    }
+  }
+
+  double m_position = analogPot.get();
+  double m_timeStepInit = frc::Timer::Get();
+  double m_potVelocity = (m_position - m_lastPosition) / ; 
+  //double m_potVelocity = (position - lastPosition)/timestep;
+  m_data.insert( m_data.begin(), {type, direction});
+  m_data.insert( m_data.end(), {m_motorVoltage, m_position, m_potVelocity});
+
+  //for next iteration
+  m_lastPosition = analogPot.get();
+
 }
-
-// void SysIdGeneralMechanismLogger::Log(double voltage, double measuredPosition, double measuredVelocity) {
-//     UpdateData();
-//     if (m_data.size() < 3600) {
-//       std::array<double, 4> arr = {__time_t, voltage, measuredPosition, 
-//       measuredVelocity};
-
-//       m_data.insert(m_data.end(), arr.cbegin(), arr.cend());
-//     }
-
-//     //m_primaryMotorVoltage = units::volt_t{m_motorVoltage};
-// }
 
 void Robot::TeleopInit() {}
 
 void Robot::TeleopPeriodic() {}
 
 void Robot::DisabledInit() {
-  m_motorVoltage = 0;
-
+  m_motorVoltage = 0.0; 
     frc::SmartDashboard::PutBoolean("SysIdOverflow", m_data.size() >= 3600);
-
+  //string to json
       std::stringstream ss;
-      for (size_t i = 0; i < m_data.size(); ++i) {
+      for (int i = 0; i < m_data.size(); ++i) {
         ss << std::to_string(m_data[i]);
         if (i < m_data.size() - 1) {
           ss << ",";
-    }
+    } 
   }
-  //implement sd over?
-  //NT_Logger.SendData();
+
+  //could use test below to prefix test name OR leave it as first term in vector (current V does both)
+    std::string type = m_testType == "Dynamic" ? "fast" : "slow";
+    std::string direction = m_voltageCommand > 0 ? "forward" : "backward";
+    std::string test = fmt::format("{}-{}", type, direction);
+
+  //insert json functionality here >;(
+    //frc::
+
+
+  m_data.clear()
 }
 
 void Robot::DisabledPeriodic() {}
