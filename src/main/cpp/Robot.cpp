@@ -46,8 +46,6 @@ double stepVoltage = 3.0;
 
 double rampRate = 0.2; 
 
-ofstream MyFile("/home/lvuser/sysidLogs/sysid.json");
-
 // tmpfile;
 
  //std::string sysidLogs = "C:/home/lvuser/sysidLogs/sysid.txt";
@@ -156,6 +154,14 @@ void Robot::DisabledInit() {
     // ostream << ss;
 
     
+    ofstream MyFile;
+    string filename("/home/lvuser/sysidLogs/sysid.json");
+
+    MyFile.open(filename, std::ios_base::app | std::ios_base::in);
+      if(!MyFile.is_open()) {
+        fmt::print("FAILED: FILE NOT CREATED");
+        exit(1);
+      }
 
     MyFile << "{";
     MyFile << test << ": [";
