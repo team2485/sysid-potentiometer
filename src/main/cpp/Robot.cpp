@@ -24,6 +24,10 @@
 
 #include <wpi/fs.h>
 
+#include <stdio.h>
+
+using namespace std;
+
 using namespace frc;
 
 WPI_TalonSRX m_talonsrx = {32};
@@ -41,6 +45,8 @@ double m_lastPosition = 0.0;
 double stepVoltage = 3.0;
 
 double rampRate = 0.2; 
+
+ofstream MyFile("/home/lvuser/sysidLogs/sysid.json");
 
 // tmpfile;
 
@@ -75,30 +81,29 @@ void Robot::AutonomousPeriodic() {
   if (m_testType == "fast") {
     if (direction == "forward") {
       m_motorVoltage = stepVoltage;
-      m_talonsrx.setVoltage(m_motorVoltage);
+      m_talonsrx.SetVoltage((units::volt_t) m_motorVoltage);
     }
     else {
       m_motorVoltage = -stepVoltage;
-      m_talonsrx.setVoltage(m_motorVoltage);
+      m_talonsrx.SetVoltage((units::volt_t) m_motorVoltage);
     }
-
   }
   else {
     if(direction == "forward") {
-      m_motorVoltage = rampRate * (frc::Timer::GetFPGATTimestamp().value() - m_data::front());
-      m_talonsrx.setVoltage(m_motorVoltage);
+      m_motorVoltage = rampRate * (frc::Timer::GetFPGATimestamp().value() - m_data.front());
+      m_talonsrx.SetVoltage((units::volt_t) m_motorVoltage);
     }
     else {
-      m_motorVoltage = - rampRate * (frc::Timer::GetFPGATTimestamp().value() - m_data::front());
-      m_talonsrx.setVoltage(m_motorVoltage);
+      m_motorVoltage = - rampRate * (frc::Timer::GetFPGATimestamp().value() - m_data.front());
+      m_talonsrx.SetVoltage((units::volt_t) m_motorVoltage);
     }
   }
 
   double m_position = analogPot.Get();
-  double m_timeStepInit = frc::Timer::Get();
+  //const double m_timeStepInit = frc::Timer::Get();
   double m_potVelocity = (m_position - m_lastPosition) / 0.005; 
   
-  m_data.insert( m_data.begin(), {type, direction});
+  //m_data.insert( m_data.begin(), {type, direction});
   m_data.insert( m_data.end(), {m_talonsrx.GetMotorOutputVoltage(), m_position, m_potVelocity});
 
   m_lastPosition = analogPot.Get();
@@ -113,14 +118,14 @@ void Robot::DisabledInit() {
   m_motorVoltage = 0.0; 
   //frc::SmartDashboard::PutBoolean("SysIdOverflow", m_data.size() >= 3600);
   //string to json
-      std::stringstream ss;
-      for (int i = 0; i < m_data.size(); ++i) {
-        ss << std::to_string(m_data[i]);
-        if (i < m_data.size() - 1) {
-          ss << ",";
-    } 
-  }
-  //could use test below to prefix test name OR leave it as first term in vector (current V does both)
+  //     std::stringstream ss;
+  //     for (int i = 0; i < m_data.size(); ++i) {
+  //       ss << std::to_string(m_data[i]);
+  //       if (i < m_data.size() - 1) {
+  //         ss << ",";
+  //   } 
+  // }
+    //could use test below to prefix test name OR leave it as first term in vector (current V does both)
     std::string type = m_testType == "Dynamic" ? "fast" : "slow";
     std::string direction = m_motorVoltage > 0 ? "forward" : "backward";
     std::string test = fmt::format("{}-{}", type, direction);
@@ -138,20 +143,39 @@ void Robot::DisabledInit() {
     // }
 
     // file.close();
-    const fs::path& path = "/home/lvuser/sysidLogs/sysid.txt";
-    fs::create_directories(path().root_directory());
+    // const fs::path& path = "/home/lvuser/sysidLogs/sysid.json";
+    // fs::create_directories(path().root_directory());
 
-    std::error_code ec;
-    wpi::raw_fd_ostream ostream{path.string(), ec};
+    // std::error_code ec;
+    // wpi::raw_fd_ostream ostream{path.string(), ec};
 
-    if (ec) {
-      throw std::runtime_error("FAILED: " + ec.message());
+    // if (ec) {
+    //   throw std::runtime_error("FAILED: " + ec.message());
+    // }
+
+    // ostream << ss;
+
+    
+
+    MyFile << "{";
+    MyFile << test << ": [";
+
+    cout << m_data.size() % 4;
+
+    for (int i = 0; i < m_data.size(); i = i + 4) {
+      MyFile << "[";
+      MyFile << m_data.at(i); 
+      MyFile << m_data.at(i + 1); 
+      MyFile << m_data.at(i + 2); 
+      MyFile << m_data.at(i + 3); 
+      MyFile << "]";
     }
 
-    ostream << ss;
+    MyFile << "]";
 
+    MyFile.close();
 
-  m_data.clear();
+    m_data.clear();
 
 }
 
