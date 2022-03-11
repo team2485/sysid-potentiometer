@@ -22,6 +22,8 @@
 
 #include <fstream>
 
+#include <wpi/fs.h>
+
 using namespace frc;
 
 WPI_TalonSRX m_talonsrx = {32};
@@ -42,7 +44,7 @@ double rampRate = 0.2;
 
 // tmpfile;
 
- std::string sysidLogs = "C:/home/lvuser/sysidLogs/sysid.txt";
+ //std::string sysidLogs = "C:/home/lvuser/sysidLogs/sysid.txt";
 
 
 Robot::Robot() : frc::TimedRobot(5_ms){
@@ -83,11 +85,11 @@ void Robot::AutonomousPeriodic() {
   }
   else {
     if(direction == "forward") {
-      m_motorVoltage = rampRate * (frc::Timer::GetFPGATTimestamp().value() - std::m_data::front());
+      m_motorVoltage = rampRate * (frc::Timer::GetFPGATTimestamp().value() - m_data::front());
       m_talonsrx.setVoltage(m_motorVoltage);
     }
     else {
-      m_motorVoltage = - rampRate * (frc::Timer::GetFPGATTimestamp().value() - std::m_data::front());
+      m_motorVoltage = - rampRate * (frc::Timer::GetFPGATTimestamp().value() - m_data::front());
       m_talonsrx.setVoltage(m_motorVoltage);
     }
   }
@@ -122,23 +124,35 @@ void Robot::DisabledInit() {
     std::string type = m_testType == "Dynamic" ? "fast" : "slow";
     std::string direction = m_motorVoltage > 0 ? "forward" : "backward";
     std::string test = fmt::format("{}-{}", type, direction);
+    //FILE WRITING ATTEMPT LOLZ
+    // fs::ofstream file;
+    // fs::file.open("C:/home/lvuser/sysidLogs/sysid.txt");
+    // //o << 
 
-    fs::ofstream file;
-    std::file.open("C:/home/lvuser/sysidLogs/sysid.txt");
-    //o << 
+    // if (!file.is_open()) {
+    //   fmt::print("FAILED");
+    // }
+    // else {
+    //   file.write(m_data.data(), m_data.size());
+    //   fmt::print("SUCCEEDED");
+    // }
 
-    if (!file.is_open()) {
-      fmt::print("FAILED");
+    // file.close();
+    const fs::path& path = "/home/lvuser/sysidLogs/sysid.txt";
+    fs::create_directories(path().root_directory());
+
+    std::error_code ec;
+    wpi::raw_fd_ostream ostream{path.string(), ec};
+
+    if (ec) {
+      throw std::runtime_error("FAILED: " + ec.message());
     }
-    else {
-      file.write(m_data.data(), m_data.size());
-      fmt::print("SUCCEEDED");
-    }
 
-    file.close();
+    ostream << ss;
 
 
   m_data.clear();
+
 }
 
 void Robot::DisabledPeriodic() {}
