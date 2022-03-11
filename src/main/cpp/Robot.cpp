@@ -18,6 +18,10 @@
 
 #include <wpi/json.h>
 
+#include <iostream>
+
+#include <fstream>
+
 using namespace frc;
 
 WPI_TalonSRX m_talonsrx = {32};
@@ -36,11 +40,14 @@ double stepVoltage = 3.0;
 
 double rampRate = 0.2; 
 
-json_serializer
+// tmpfile;
 
-Robot::Robot() : frc::TimedRobot(0.005){
+ std::string sysidLogs = "C:/home/lvuser/sysidLogs/sysid.txt";
+
+
+Robot::Robot() : frc::TimedRobot(5_ms){
   try {
-    m_json = GetConfigJson();
+    //m_json = GetConfigJson();
 
   } catch (std::exception& e) {
     fmt::print("FAILED: \n", e.what());
@@ -48,11 +55,9 @@ Robot::Robot() : frc::TimedRobot(0.005){
   }
 }
 
-void Robot::RobotInit() {
-}
+void Robot::RobotInit() {}
 
 void Robot::RobotPeriodic() {}
-}
 
 void Robot::AutonomousInit() {
   m_data.clear();
@@ -61,37 +66,40 @@ void Robot::AutonomousInit() {
 }
 
 void Robot::AutonomousPeriodic() {
-  m_lastPosition = analogPot.get();
+  m_lastPosition = analogPot.Get();
   std::string type = m_testType == "Dynamic" ? "fast" : "slow";
   m_motorVoltage = m_talonsrx.GetMotorOutputVoltage();
   std::string direction = m_motorVoltage > 0 ? "forward" : "backward";
   if (m_testType == "fast") {
     if (direction == "forward") {
       m_motorVoltage = stepVoltage;
+      m_talonsrx.setVoltage(m_motorVoltage);
     }
     else {
       m_motorVoltage = -stepVoltage;
+      m_talonsrx.setVoltage(m_motorVoltage);
     }
 
   }
   else {
     if(direction == "forward") {
       m_motorVoltage = rampRate * (frc::Timer::GetFPGATTimestamp().value() - std::m_data::front());
+      m_talonsrx.setVoltage(m_motorVoltage);
     }
     else {
       m_motorVoltage = - rampRate * (frc::Timer::GetFPGATTimestamp().value() - std::m_data::front());
+      m_talonsrx.setVoltage(m_motorVoltage);
     }
   }
 
-  double m_position = analogPot.get();
+  double m_position = analogPot.Get();
   double m_timeStepInit = frc::Timer::Get();
-  double m_potVelocity = (m_position - m_lastPosition) / ; 
-  //double m_potVelocity = (position - lastPosition)/timestep;
+  double m_potVelocity = (m_position - m_lastPosition) / 0.005; 
+  
   m_data.insert( m_data.begin(), {type, direction});
-  m_data.insert( m_data.end(), {m_motorVoltage, m_position, m_potVelocity});
+  m_data.insert( m_data.end(), {m_talonsrx.GetMotorOutputVoltage(), m_position, m_potVelocity});
 
-  //for next iteration
-  m_lastPosition = analogPot.get();
+  m_lastPosition = analogPot.Get();
 
 }
 
@@ -101,7 +109,7 @@ void Robot::TeleopPeriodic() {}
 
 void Robot::DisabledInit() {
   m_motorVoltage = 0.0; 
-    frc::SmartDashboard::PutBoolean("SysIdOverflow", m_data.size() >= 3600);
+  //frc::SmartDashboard::PutBoolean("SysIdOverflow", m_data.size() >= 3600);
   //string to json
       std::stringstream ss;
       for (int i = 0; i < m_data.size(); ++i) {
@@ -110,17 +118,27 @@ void Robot::DisabledInit() {
           ss << ",";
     } 
   }
-
   //could use test below to prefix test name OR leave it as first term in vector (current V does both)
     std::string type = m_testType == "Dynamic" ? "fast" : "slow";
-    std::string direction = m_voltageCommand > 0 ? "forward" : "backward";
+    std::string direction = m_motorVoltage > 0 ? "forward" : "backward";
     std::string test = fmt::format("{}-{}", type, direction);
 
-  //insert json functionality here >;(
-    //frc::
+    fs::ofstream file;
+    std::file.open("C:/home/lvuser/sysidLogs/sysid.txt");
+    //o << 
+
+    if (!file.is_open()) {
+      fmt::print("FAILED");
+    }
+    else {
+      file.write(m_data.data(), m_data.size());
+      fmt::print("SUCCEEDED");
+    }
+
+    file.close();
 
 
-  m_data.clear()
+  m_data.clear();
 }
 
 void Robot::DisabledPeriodic() {}
