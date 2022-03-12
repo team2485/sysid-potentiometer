@@ -30,7 +30,7 @@ class Robot : public frc::TimedRobot {
     std::vector<double> m_data;
 
     std::string m_testType = "quasistatic";
-    std::string m_direction = "forward";
+    std::string m_direction = "backward";
 
     double m_motorVoltage; 
 

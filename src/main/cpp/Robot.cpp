@@ -83,36 +83,36 @@ void Robot::DisabledInit() {
     m_talon.SetVoltage((units::volt_t) 0);
   
   if(m_data.size() > 0) {
-std::string type = m_testType == "dynamic" ? "fast" : "slow";
+    std::string type = m_testType == "dynamic" ? "fast" : "slow";
     std::string direction = m_direction;
     std::string test = fmt::format("{}-{}", type, direction);
 
-    ofstream MyFile;
-    string filename("/home/lvuser/sysidLogs/sysid.json");
+    ofstream file;
+    string filename("/home/lvuser/sysidLogs/sysidLog1.json");
 
-    MyFile.open(filename, std::ios_base::app | std::ios_base::in);
-      if(!MyFile.is_open()) {
+    file.open(filename, std::ios_base::app | std::ios_base::in);
+      if(!file.is_open()) {
         fmt::print("FAILED: FILE NOT CREATED");
         exit(1);
       }
 
-    MyFile << "{";
-    MyFile << test << ": [";
+    file << "{";
+    file << test << ": [";
 
     cout << m_data.size() % 4;
 
     for (int i = 0; i < m_data.size(); i = i + 4) {
-      MyFile << "[";
-      MyFile << m_data.at(i); 
-      MyFile << m_data.at(i + 1); 
-      MyFile << m_data.at(i + 2); 
-      MyFile << m_data.at(i + 3); 
-      MyFile << "]";
+      file << "[";
+      file << m_data.at(i); 
+      file << m_data.at(i + 1); 
+      file << m_data.at(i + 2); 
+      file << m_data.at(i + 3); 
+      file << "]";
     }
 
-    MyFile << "]";
+    file << "]";
 
-    MyFile.close();
+    file.close();
 
     m_data.clear();
   }
