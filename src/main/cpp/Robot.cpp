@@ -88,9 +88,8 @@ void Robot::DisabledInit() {
     std::string test = fmt::format("{}-{}", type, direction);
 
     ofstream file;
-    string filename("/home/lvuser/sysidLogs/sysidLog1.json");
 
-    file.open(filename, std::ios_base::app | std::ios_base::in);
+    file.open(m_filename, std::ios_base::app | std::ios_base::in);
       if(!file.is_open()) {
         fmt::print("FAILED: FILE NOT CREATED");
         exit(1);
@@ -101,7 +100,7 @@ void Robot::DisabledInit() {
 
     cout << m_data.size() % 4;
 
-    for (int i = 0; i < m_data.size(); i = i + 4) {
+    for (int i = 0; i < m_data.size() - 4; i = i + 4) {
       file << "[";
       file << m_data.at(i); 
       file << m_data.at(i + 1); 
