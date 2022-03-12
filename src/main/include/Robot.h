@@ -8,8 +8,6 @@
 
 #include <frc/TimedRobot.h>
 
-#include <frc/smartdashboard/SendableChooser.h>
-
 class Robot : public frc::TimedRobot {
  public:
   Robot();
@@ -25,9 +23,22 @@ class Robot : public frc::TimedRobot {
   void TestPeriodic() override;
 
  private:
-  frc::SendableChooser<std::string> m_chooser;
-  const std::string kAutoNameDefault = "Default";
-  const std::string kAutoNameCustom = "My Auto";
-  std::string m_autoSelected;
-  //wpi::json m_json;
+    WPI_TalonSRX m_talonsrx = {32};
+
+    frc::AnalogPotentiometer analogPot{0, 2*M_PI, -M_PI};
+
+    std::vector<double> m_data;
+
+    std::string m_testType = "Quasistatic";
+    std::string m_direction = "Forward";
+
+    double m_motorVoltage; 
+
+    double m_lastPosition = 0.0;
+
+    double stepVoltage = 3.0;
+
+    double rampRate = 0.1; 
+
+    double m_startTime = 0;
 };

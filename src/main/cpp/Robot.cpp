@@ -2,8 +2,6 @@
 // Open Source Software; you can modify and/or share it under the terms of
 // the WPILib BSD license file in the root directory of this project.
 
-#include "Robot.h"
-
 #include "ctre/Phoenix.h"
 
 #include "math.h"
@@ -26,28 +24,14 @@
 
 #include <stdio.h>
 
+#include <Robot.h>
+
 using namespace std;
 
 using namespace frc;
 
-WPI_TalonSRX m_talonsrx = {32};
-
-frc::AnalogPotentiometer analogPot{0, 2*M_PI, -M_PI};
-
-std::vector<double> m_data;
-
-std::string m_testType = "Quasistatic";
-std::string m_direction = "Forward";
-
-double m_motorVoltage; 
-
-double m_lastPosition = 0.0;
-
-double stepVoltage = 3.0;
-
-double rampRate = 0.1; 
-
 Robot::Robot() : frc::TimedRobot(5_ms){
+
 }
 
 void Robot::RobotInit() {
@@ -58,8 +42,8 @@ void Robot::RobotPeriodic() {}
 
 void Robot::AutonomousInit() {
   m_data.clear();
-  double m_starttime = frc::Timer::GetFPGATimestamp().value();
-  m_data.push_back(m_starttime);
+  m_startTime = frc::Timer::GetFPGATimestamp().value();
+  m_data.push_back(m_startTime);
 }
 
 void Robot::AutonomousPeriodic() {
@@ -75,10 +59,10 @@ void Robot::AutonomousPeriodic() {
   }
   else {
     if(m_direction == "Forward") {
-      m_talonsrx.SetVoltage((units::volt_t)  rampRate * (frc::Timer::GetFPGATimestamp().value() - m_data.front()));
+      m_talonsrx.SetVoltage((units::volt_t)  rampRate * (frc::Timer::GetFPGATimestamp().value() - m_startTime));
     }
     else {
-      m_talonsrx.SetVoltage((units::volt_t) - rampRate * (frc::Timer::GetFPGATimestamp().value() - m_data.front()));
+      m_talonsrx.SetVoltage((units::volt_t) - rampRate * (frc::Timer::GetFPGATimestamp().value() - m_startTime));
     }
   }
 
@@ -139,8 +123,7 @@ void Robot::TestInit() {}
 
 void Robot::TestPeriodic() {}
 
+
 #ifndef RUNNING_FRC_TESTS
-int main() {
-  return frc::StartRobot<Robot>();
-}
+int main() { return frc::StartRobot<Robot>(); }
 #endif
