@@ -47,31 +47,31 @@ void Robot::AutonomousInit() {
 }
 
 void Robot::AutonomousPeriodic() {
-  m_lastPosition = analogPot.Get();
+  m_lastPosition = m_pot.Get();
   
-  if (m_testType == "Dynamic") {
-    if (m_direction == "Forward") {
-      m_talonsrx.SetVoltage((units::volt_t) stepVoltage);
+  if (m_testType == "dynamic") {
+    if (m_direction == "forward") {
+      m_talon.SetVoltage((units::volt_t) m_stepVoltage);
     }
     else {
-      m_talonsrx.SetVoltage((units::volt_t) -stepVoltage);
+      m_talon.SetVoltage((units::volt_t) -m_stepVoltage);
     }
   }
   else {
-    if(m_direction == "Forward") {
-      m_talonsrx.SetVoltage((units::volt_t)  rampRate * (frc::Timer::GetFPGATimestamp().value() - m_startTime));
+    if(m_direction == "forward") {
+      m_talon.SetVoltage((units::volt_t)  m_rampRate * (frc::Timer::GetFPGATimestamp().value() - m_startTime));
     }
     else {
-      m_talonsrx.SetVoltage((units::volt_t) - rampRate * (frc::Timer::GetFPGATimestamp().value() - m_startTime));
+      m_talon.SetVoltage((units::volt_t) - m_rampRate * (frc::Timer::GetFPGATimestamp().value() - m_startTime));
     }
   }
 
-  double m_position = analogPot.Get();
+  double m_position = m_pot.Get();
   double m_potVelocity = (m_position - m_lastPosition) / 0.005; 
   
-    m_data.insert( m_data.end(), {m_talonsrx.GetMotorOutputVoltage(), m_position, m_potVelocity});
+    m_data.insert( m_data.end(), {m_talon.GetMotorOutputVoltage(), m_position, m_potVelocity});
 
-  m_lastPosition = analogPot.Get();
+  m_lastPosition = m_pot.Get();
 
 }
 
@@ -80,10 +80,11 @@ void Robot::TeleopInit() {}
 void Robot::TeleopPeriodic() {}
 
 void Robot::DisabledInit() {
-  m_motorVoltage = 0.0; 
+    m_talon.SetVoltage((units::volt_t) 0);
   
-    std::string type = m_testType == "Dynamic" ? "fast" : "slow";
-    std::string direction = m_motorVoltage > 0 ? "forward" : "backward";
+  if(m_data.size() > 0) {
+std::string type = m_testType == "dynamic" ? "fast" : "slow";
+    std::string direction = m_direction;
     std::string test = fmt::format("{}-{}", type, direction);
 
     ofstream MyFile;
@@ -114,7 +115,7 @@ void Robot::DisabledInit() {
     MyFile.close();
 
     m_data.clear();
-
+  }
 }
 
 void Robot::DisabledPeriodic() {}

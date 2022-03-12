@@ -23,22 +23,22 @@ class Robot : public frc::TimedRobot {
   void TestPeriodic() override;
 
  private:
-    WPI_TalonSRX m_talonsrx = {32};
+    WPI_TalonSRX m_talon = {32};
 
-    frc::AnalogPotentiometer analogPot{0, 2*M_PI, -M_PI};
+    frc::AnalogPotentiometer m_pot{0, 2*M_PI, -M_PI};
 
     std::vector<double> m_data;
 
-    std::string m_testType = "Quasistatic";
-    std::string m_direction = "Forward";
+    std::string m_testType = "quasistatic";
+    std::string m_direction = "forward";
 
     double m_motorVoltage; 
 
     double m_lastPosition = 0.0;
 
-    double stepVoltage = 3.0;
+    double m_stepVoltage = 3.0;
 
-    double rampRate = 0.1; 
+    double m_rampRate = 0.1; 
 
     double m_startTime = 0;
 };
