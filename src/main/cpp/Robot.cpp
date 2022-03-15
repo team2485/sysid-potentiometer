@@ -85,28 +85,40 @@ void Robot::DisabledInit() {
   if(m_data.size() > 0) {
     std::string type = m_testType == "dynamic" ? "fast" : "slow";
     std::string direction = m_direction;
-    std::string test = fmt::format("{}-{}", type, direction);
+    std::string test = fmt::format("\"{}-{} \"", type, direction);
 
     ofstream file;
 
     file.open(m_filename, std::ios_base::app | std::ios_base::in);
-      if(!file.is_open()) {
-        fmt::print("FAILED: FILE NOT CREATED");
-        exit(1);
-      }
+    if(!file.is_open()) {
+      fmt::print("FAILED: FILE NOT CREATED");
+      exit(1);
+    }
 
-    file << "{";
-    file << test << ": [";
+    file << "{ \n";
+    file << test << ": [ \n";
 
-    cout << m_data.size() % 4;
+    if ( m_data.size() % 4) {
+      exit(1);
+    }
 
     for (int i = 0; i < m_data.size() - 4; i = i + 4) {
       file << "[";
+      file << "\n";
       file << m_data.at(i); 
+      file << ", \n";
       file << m_data.at(i + 1); 
+      file << ", \n";
       file << m_data.at(i + 2); 
+      file << ", \n";
       file << m_data.at(i + 3); 
-      file << "]";
+      file << "\n";
+      if (i + 3 == m_data.size() - 1) {
+        file << "] \n";
+      }
+      else {
+        file << "], \n";
+      }
     }
 
     file << "]";
